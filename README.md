@@ -42,7 +42,7 @@ FastAPI API：http://127.0.0.1:8001/docs
 ### 首頁功能選單
 ![CRUD UI](./images/crud_ui.jpg)
 
-### 動態圖表展示
+### 圖表展示
 ![圖表 UI](./images/chartjs_ui.jpg)
 
 ### API Swagger文件
