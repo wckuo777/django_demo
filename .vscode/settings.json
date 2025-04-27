@@ -1,0 +1,8 @@
+{
+  "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true
+}
+//讓 VS Code 自動使用虛擬環境並在儲存時格式化
+//"python.pythonPath": "${workspaceFolder}/.venv/bin/python",

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <title>網站首頁</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 50px;
+      }
+      h1 {
+        margin-bottom: 40px;
+      }
+      .menu {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+      }
+      .menu a {
+        display: inline-block;
+        padding: 15px 25px;
+        background-color: #4caf50;
+        color: white;
+        text-decoration: none;
+        font-size: 18px;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+      }
+      .menu a:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome Django Demo</h1>
+
+    <div class="menu">
+      {% for app in apps %}
+        <a href="{{ app.url }}">{{ app.name }}</a>
+      {% endfor %}
+    </div>
+    {% comment %} <a href="{% url 'demo_charts:mainpage' %}">看堆疊圖</a> {% endcomment %}
+  </body>
+</html>

@@ -1,0 +1,225 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <title>FastAPI 水果 API Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2rem;
+      }
+      h1 {
+        text-align: center;
+      }
+      #controls {
+        width: 80%;
+        margin: 1rem auto;
+        text-align: right;
+      }
+      #controls input {
+        padding: 0.4rem;
+        width: 200px;
+      }
+      #controls button {
+        padding: 0.4rem 0.8rem;
+        margin-left: 0.5rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 80%;
+        margin: 1rem auto;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5rem 1rem;
+        text-align: left;
+      }
+      th {
+        background: #f4f4f4;
+      }
+      button.delete {
+        color: white;
+        background: #e74c3c;
+        border: none;
+        padding: 0.3rem 0.6rem;
+        cursor: pointer;
+      }
+      .back-button {
+        display: inline-block;
+        margin: 20px;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+      }
+      .back-button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="{% url 'index' %}" class="back-button">回到首頁</a>
+    <h1>FastAPI 水果 CRUD API Demo</h1>
+
+    <div id="controls">
+      <form method="get" style="display:inline;">
+        <label>搜尋水果：<input type="text" name="search" placeholder="輸入名稱…" value="{{ request.GET.search }}" /></label>
+        <button type="submit">搜尋</button>
+        <a href="{% url 'demo_charts:test_api' %}" style="text-decoration:none;"><button type="button">Refresh</button></a>
+      </form>
+    </div>
+
+    <!-- 新增Django POST -->
+    <div id="addFruitForm" style="width:80%; margin:2rem auto; text-align:right;">
+      <form method="post" action="{% url 'demo_charts:test_api' %}">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="水果名稱" required />
+        <input type="text" name="color" placeholder="水果顏色" required />
+        <button type="submit">新增水果</button>
+      </form>
+    </div>
+
+    <table id="fruitsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>名稱</th>
+          <th>顏色</th>
+          <th>動作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fruit in fruits %}
+          <tr>
+            <td>{{ fruit.id }}</td>
+            <td>{{ fruit.name }}</td>
+            <td>{{ fruit.color }}</td>
+            <td>
+              <form method="post" action="#" style="display:inline;">
+                {% csrf_token %}
+                <button type="button" class="delete" onclick="event.stopPropagation(); deleteFruit({{ fruit.id }})">刪除</button>
+              </form>
+              <form method="post" action="#" style="display:inline;">
+                {% csrf_token %}
+                <button type="button" onclick="event.stopPropagation(); startEdit({{ fruit.id }}, '{{ fruit.name }}', '{{ fruit.color }}')">更改</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4">目前沒有水果資料。</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div id="editFruitForm" style="width:80%; margin:2rem auto; text-align:right; display:none;">
+      <form method="post" onsubmit="submitEdit(event)">
+        {% csrf_token %}
+        <input type="hidden" id="editFruitId" />
+        <input type="text" id="editFruitName" placeholder="水果名稱" required />
+        <input type="text" id="editFruitColor" placeholder="水果顏色" required />
+        <button type="submit">更新水果</button>
+        <button type="button" onclick="cancelEdit()">取消</button>
+      </form>
+    </div>
+    <script>
+      const API_BASE = 'http://localhost:8001/api/v1/fruits'
+      
+      async function deleteFruit(id) {
+        if (!confirm(`確定要刪除 ID ${id} 嗎？`)) return
+        try {
+          const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
+          const result = await res.json()
+          alert(result.message || '刪除成功')
+          window.location.reload() // 刪除後刷新畫面
+        } catch (err) {
+          console.error(err)
+          alert('刪除失敗')
+        }
+      }
+      
+      async function addFruit() {
+        const name = document.getElementById('newFruitName').value.trim()
+        const color = document.getElementById('newFruitColor').value.trim()
+      
+        if (!name || !color) {
+          alert('請填寫水果名稱和顏色')
+          return
+        }
+      
+        try {
+          const res = await fetch(API_BASE + '/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, color })
+          })
+          if (!res.ok) {
+            const error = await res.json()
+            alert(error.detail || '新增失敗')
+            return
+          }
+          const result = await res.json()
+          alert('新增成功: ' + result.name)
+          window.location.reload() // 新增後刷新畫面
+        } catch (err) {
+          console.error(err)
+          alert('新增失敗')
+        }
+      }
+      
+      // modify script
+      async function startEdit(id, name, color) {
+        document.getElementById('editFruitId').value = id
+        document.getElementById('editFruitName').value = name
+        document.getElementById('editFruitColor').value = color
+        document.getElementById('editFruitForm').style.display = 'block'
+      }
+      
+      function cancelEdit() {
+        document.getElementById('editFruitForm').style.display = 'none'
+        document.getElementById('editFruitId').value = ''
+        document.getElementById('editFruitName').value = ''
+        document.getElementById('editFruitColor').value = ''
+      }
+      
+      async function submitEdit(event) {
+        event.preventDefault()
+      
+        const id = document.getElementById('editFruitId').value
+        const name = document.getElementById('editFruitName').value.trim()
+        const color = document.getElementById('editFruitColor').value.trim()
+      
+        if (!name || !color) {
+          alert('請填寫水果名稱和顏色')
+          return
+        }
+      
+        try {
+          const res = await fetch(`${API_BASE}/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, color })
+          })
+          if (!res.ok) {
+            const error = await res.json()
+            alert(error.detail || '更新失敗')
+            return
+          }
+          alert('更新成功')
+          window.location.reload()
+        } catch (err) {
+          console.error(err)
+          alert('更新失敗')
+        }
+      }
+    </script>
+  </body>
+</html>

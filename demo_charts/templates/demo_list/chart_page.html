@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8" />
+    <title>堆疊長條圖和圓餅圖範例</title>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 你的工具檔 -->
+    <script src="{% static 'demo_charts/js/utils.js' %}"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .chart-container {
+        position: relative;
+        margin: 2rem auto;
+        width: 90vw;
+        height: 400px;
+      }
+      
+      #actionButtons {
+        text-align: center;
+        margin-top: 20px;
+      }
+      
+      #actionButtons button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        background-color: #4caf50;
+        color: white;
+        transition: background-color 0.3s;
+      }
+      
+      #actionButtons button:hover {
+        background-color: #45a049;
+      }
+      .back-button {
+        display: inline-block;
+        margin: 20px;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+      }
+      .back-button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 返回首頁的按鈕 -->
+    <a href="{% url 'index' %}" class="back-button">回到首頁</a>
+    <h1>堆疊長條圖</h1>
+    <div class="chart-container">
+      <canvas id="stackedBarChart"></canvas>
+    </div>
+
+    <h1>圓餅圖</h1>
+    <div class="chart-container">
+      <canvas id="pieChart"></canvas>
+    </div>
+
+    <div id="actionButtons"></div>
+
+    <script>
+    // 1. 堆疊長條圖資料
+    const labels = {{ labels|safe }};
+    const datasets = {{ datasets|safe }}.map((ds, i) => ({
+      label: ds.label,
+      data: ds.data,
+      backgroundColor: `rgba(${50 * i}, ${99 + 60 * i}, ${132 + 30 * i}, 0.5)`
+    }));
+
+    const stackedBarChart = new Chart(
+      document.getElementById('stackedBarChart'),
+      {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: { size: 18 },
+                boxWidth: 30,
+                boxHeight: 30,
+                padding: 20
+              },
+              title: {
+                display: true,
+                text: '堆疊長條圖範例',
+                font: { size: 20, weight: 'bold' },
+                padding: { top: 10, bottom: 10 }
+              }
+            }
+          },
+          layout: { padding: { top: 40 } },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      }
+    );
+
+    // 2. 圓餅圖資料
+    const DATA_COUNT = 5;
+    const NUMBER_CFG = { count: DATA_COUNT, min: 0, max: 100 };
+
+    const pieData = {
+      labels: ['紅', '藍', '黃', '綠', '紫'],
+      datasets: [{
+        data: Utils.numbers(NUMBER_CFG),
+        backgroundColor: [
+          'rgba(255,99,132,0.6)',
+          'rgba(54,162,235,0.6)',
+          'rgba(255,206,86,0.6)',
+          'rgba(75,192,192,0.6)',
+          'rgba(153,102,255,0.6)'
+        ]
+      }]
+    };
+
+    const pieChart = new Chart(
+      document.getElementById('pieChart'),
+      {
+        type: 'pie',
+        data: pieData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            title: {
+              display: true,
+              text: '圓餅圖範例'
+            }
+          }
+        }
+      }
+    );
+
+    // 3. 動作按鈕
+    const actions = [
+      {
+        name: '隨機資料',
+        handler(chart) {
+          chart.data.datasets.forEach(dataset => {
+            dataset.data = Utils.numbers({ count: chart.data.labels.length, min: 0, max: 100 });
+          });
+          chart.update();
+        }
+      },
+      {
+        name: '新增資料集',
+        handler(chart) {
+          const data = chart.data;
+          const newDataset = {
+            label: 'Dataset ' + (data.datasets.length + 1),
+            backgroundColor: [],
+            data: []
+          };
+          for (let i = 0; i < data.labels.length; i++) {
+            newDataset.data.push(Utils.numbers({ count: 1, min: 0, max: 100 })[0]);
+            newDataset.backgroundColor.push('rgba(' + (Math.floor(Math.random() * 255)) + ',' + 
+                                                      (Math.floor(Math.random() * 255)) + ',' + 
+                                                      (Math.floor(Math.random() * 255)) + ',0.6)');
+          }
+          chart.data.datasets.push(newDataset);
+          chart.update();
+        }
+      },
+      {
+        name: '新增一筆資料',
+        handler(chart) {
+          const data = chart.data;
+          const newLabel = '資料 #' + (data.labels.length + 1);
+          data.labels.push(newLabel);
+          data.datasets.forEach(dataset => {
+            dataset.data.push(Utils.rand(0, 100));
+          });
+          chart.update();
+        }
+      },
+      {
+        name: '移除一個資料集',
+        handler(chart) {
+          chart.data.datasets.pop();
+          chart.update();
+        }
+      },
+      {
+        name: '移除一筆資料',
+        handler(chart) {
+          chart.data.labels.pop();
+          chart.data.datasets.forEach(dataset => {
+            dataset.data.pop();
+          });
+          chart.update();
+        }
+      }
+    ];
+
+    // 4. 建立按鈕並綁定到 pieChart
+    const container = document.getElementById('actionButtons');
+    actions.forEach(action => {
+      const btn = document.createElement('button');
+      btn.textContent = action.name;
+      btn.addEventListener('click', () => action.handler(pieChart));
+      container.appendChild(btn);
+    });
+  </script>
+  </body>
+</html>
