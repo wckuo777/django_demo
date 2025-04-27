@@ -5,9 +5,9 @@
 - Django 網站入口與管理）
 - FastAPI （RESTful API服務）
 - SQLite3（資料庫）
-- SQLAlchemy 2.0.40（FastAPI ORM）
+- SQLAlchemy FastAPI ORM）
 - Chart.js（CDN前端動態圖表）
-- Uvicorn 0.34.2（ASGI伺服器）
+- Uvicorn ASGI伺服器）
 
 ## 🚀 專案功能
 - Django 作為主網站入口與管理介面
